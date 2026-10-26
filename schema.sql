@@ -1,0 +1,65 @@
+CREATE DATABASE IF NOT EXISTS social_network;
+USE social_network;
+
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(20) NOT NULL UNIQUE,
+  email VARCHAR(100) NOT NULL UNIQUE,
+  password_hash VARCHAR(100) NOT NULL,
+  bio VARCHAR(300) DEFAULT '',
+  avatar VARCHAR(255) DEFAULT NULL,
+  is_private TINYINT(1) NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS posts (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  content TEXT,
+  media VARCHAR(255) DEFAULT NULL,
+  media_type ENUM('image','video') DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX (created_at)
+);
+
+CREATE TABLE IF NOT EXISTS comments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  post_id INT NOT NULL,
+  user_id INT NOT NULL,
+  content VARCHAR(500) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS likes (
+  user_id INT NOT NULL,
+  post_id INT NOT NULL,
+  PRIMARY KEY (user_id, post_id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS friendships (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  requester_id INT NOT NULL,
+  addressee_id INT NOT NULL,
+  status ENUM('pending','accepted') NOT NULL DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (requester_id, addressee_id),
+  FOREIGN KEY (requester_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (addressee_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  actor_id INT NOT NULL,
+  type ENUM('like','comment','friend_request','friend_accept') NOT NULL,
+  post_id INT DEFAULT NULL,
+  is_read TINYINT(1) NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE CASCADE
+);
